@@ -1,5 +1,6 @@
 import "./App.css";
 import SetTheme from "./SetTheme";
+import Tree from "./Tree";
 import UserPrefs from "./UserPrefs";
 import WebsocketInit from "./WebsocketInit";
 
@@ -8,7 +9,8 @@ function App() {
     <>
       <WebsocketInit></WebsocketInit>
       <UserPrefs></UserPrefs>
-      <SetTheme></SetTheme>
+      {/* <SetTheme></SetTheme>
+      <Tree></Tree> */}
     </>
   );
 }

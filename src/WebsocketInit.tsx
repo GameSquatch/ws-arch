@@ -1,9 +1,11 @@
-import { useUserPreferencesState } from './server_states/user_preferences';
+import { useTreeState } from "./server_states/tree_state";
+import { useUserPreferencesState } from "./server_states/user_preferences";
 
 function WebsocketInit() {
-    useUserPreferencesState();
+  useUserPreferencesState();
+  // useTreeState();
 
-    return <div hidden></div>;
+  return <div hidden></div>;
 }
 
 export default WebsocketInit;

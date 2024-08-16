@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { atomWithStorage } from "jotai/utils";
 import { atom, useAtom } from "jotai";
 
 import { createLocalStorageConfig } from "./local_storage_config.js";
-import { useZootWebSocket, wsSend } from "../websocket.js";
+import { useNewWebSocket, wsSend } from "../websocket.js";
 
 export type UserPreferences = {
   version: number;
@@ -72,10 +72,7 @@ export const userPrefsAtom = atom(
   }
 );
 
-const userPrefsReducer = (
-  action: UserPreferencesAction,
-  currentState: UserPreferences
-) => {
+const userPrefsReducer = (action: UserPreferencesAction, currentState: UserPreferences) => {
   let newState;
   switch (action.type) {
     case "set-mode":
@@ -96,14 +93,7 @@ export const useUserPreferencesState = () => {
   const [userPrefs, dispatcher] = useAtom(userPrefsAtom);
   const sentRequestRef = useRef(false);
 
-  const { lastJsonMessage, sendJsonMessage } = useZootWebSocket<
-    UserPreferences,
-    UserPreferencesMessage
-  >(
-    useCallback((msg: MessageEvent) => {
-      return (msg.data as string).includes('"type":"userPreferences"');
-    }, [])
-  );
+  const { lastJsonMessage, sendJsonMessage } = useNewWebSocket<UserPreferences>("userPreferences", (msg) => msg);
 
   useEffect(() => {
     if (sentRequestRef.current) return;
@@ -115,10 +105,10 @@ export const useUserPreferencesState = () => {
     if (!lastJsonMessage) return;
 
     let serverMigrated;
-    if (userPrefs.version > lastJsonMessage.version) {
+    if (lastJsonMessage.version < userPrefs.version) {
       // A migration occurred, so update server with migrated value
       // If an edit to the server occurred on another machine, we need to set this machine's local to those changed server values,
-      // so we migrate between local and server before updating the server with that
+      // so we migrate between local and server before updating the server and state with that
       serverMigrated = migrate(userPrefs, lastJsonMessage);
       sendJsonMessage({ type: "userPreferences", ...serverMigrated });
     }

@@ -21,10 +21,7 @@ export const createLocalStorageConfig = <StateType>(
       if (storedParsed.version < defaultValue.version) {
         const result = migrate(defaultValue, storedParsed);
 
-        localStorage.setItem(
-          key,
-          JSON.stringify({ ...result, version: defaultValue.version })
-        );
+        localStorage.setItem(key, JSON.stringify({ ...result, version: defaultValue.version }));
         return result;
       }
       return storedParsed;
