@@ -1,34 +1,33 @@
-import { atom, useSetAtom } from "jotai";
-import { useNewWebSocket, wsSend } from "../websocket";
-import { useEffect, useRef } from "react";
+import { atom } from "jotai";
+import { wsSend } from "../websocket";
 
-type Tree = {
+export type Tree = {
   id: string;
   children: number;
 };
 
-const baseAtom = atom<null | Tree>(null);
+export const baseTreeAtom = atom<null | Tree>(null);
 export const treeAtom = atom(
-  (get) => get(baseAtom),
+  (get) => get(baseTreeAtom),
   (_, set, newTree: Tree) => {
     wsSend(newTree);
   }
 );
 
-export const useTreeState = () => {
-  const sentRequestRef = useRef(false);
-  const setBaseAtom = useSetAtom(baseAtom);
-  const { lastJsonMessage, sendJsonMessage } = useNewWebSocket("tree", (msg) => msg);
+// export const useTreeState = () => {
+//   const sentRequestRef = useRef(false);
+//   const setBaseAtom = useSetAtom(baseAtom);
+//   const { lastJsonMessage, sendJsonMessage } = useNewWebSocket("tree", (msg) => msg);
 
-  useEffect(() => {
-    if (sentRequestRef.current) return;
-    sendJsonMessage({ type: "getTree" });
-    sentRequestRef.current = true;
-  }, []);
+//   useEffect(() => {
+//     if (sentRequestRef.current) return;
+//     sendJsonMessage({ type: "getTree" });
+//     sentRequestRef.current = true;
+//   }, []);
 
-  useEffect(() => {
-    if (!lastJsonMessage) return;
+//   useEffect(() => {
+//     if (!lastJsonMessage) return;
 
-    setBaseAtom(lastJsonMessage);
-  }, [lastJsonMessage]);
-};
+//     setBaseAtom(lastJsonMessage);
+//   }, [lastJsonMessage]);
+// };

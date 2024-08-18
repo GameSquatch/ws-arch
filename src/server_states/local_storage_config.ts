@@ -1,8 +1,8 @@
 import { SyncStorage } from "jotai/vanilla/utils/atomWithStorage";
 
-export const createLocalStorageConfig = <StateType>(
+export const createLocalStorageConfig = <StateType extends { version: number }>(
   migrate: (defaultValue: any, storedValue: any) => StateType
-): SyncStorage<StateType & { version: number }> => {
+): SyncStorage<StateType> => {
   return {
     getItem(key, defaultValue) {
       const stored = localStorage.getItem(key);

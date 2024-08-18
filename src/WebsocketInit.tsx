@@ -1,11 +1,9 @@
-import { useTreeState } from "./server_states/tree_state";
-import { useUserPreferencesState } from "./server_states/user_preferences";
+import { useZootWebSocket } from "./websocket";
 
 function WebsocketInit() {
-  useUserPreferencesState();
-  // useTreeState();
+  useZootWebSocket();
 
-  return <div hidden></div>;
+  return <></>;
 }
 
 export default WebsocketInit;
