@@ -1,0 +1,5 @@
+.context-menu {
+    position: absolute;
+    min-width: 90px;
+    background: #aaa;
+}
