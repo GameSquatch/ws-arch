@@ -15,8 +15,32 @@
 
 .editor-tab {
     margin-right: 8px;
-}
-.editor-tab.selected {
-    background: white;
-    color: black;
+    padding: 2px 4px;
+
+    &.selected {
+        background: white;
+        color: black;
+
+        &:hover {
+            background: white;
+        }
+
+        .tab-closer:hover {
+            background: rgba(0, 0, 0, 0.22);
+        }
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.22);
+    }
+
+    .tab-closer {
+        margin-left: 12px;
+        padding: 2px 4px;
+        cursor: pointer;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.22);
+        }
+    }
 }

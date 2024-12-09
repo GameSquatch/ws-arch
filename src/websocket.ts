@@ -62,89 +62,70 @@ const wsUserPrefsMessageHandler = (lastJsonMessage: UserPreferences, sendJsonMes
 type SocketListener = {
   key: string;
   setJsonMessage: React.Dispatch<React.SetStateAction<any>>;
-  messageQueue: React.MutableRefObject<any[]>;
+  wsRef: React.MutableRefObject<WebSocket | null>;
 };
 
 let listeners: Record<string, SocketListener> = {};
-const hasListeners = () => Object.keys(listeners).length > 0;
 const getListeners = () => Object.values(listeners);
 let ws: null | WebSocket = null;
+let messageQueue: any[] = [];
+type MessageType<TState> = { data: TState[] };
 
-export const useNewWebSocket = <StateType, MessageType>(
-  typeKey: string,
-  dataExtractor: (message: MessageType) => StateType
-) => {
-  const [lastJsonMessage, setLastJsonMessage] = useState<null | StateType>(null);
+export const useNewWebSocket = <TState extends { type: string }>(typeKey: string) => {
+  const [lastJsonMessage, setLastJsonMessage] = useState<null | TState[]>(null);
   const wsRef = useRef<null | WebSocket>(null);
-  const messageQueueRef = useRef<any[]>([]);
-  const reconnectCountRef = useRef(0);
 
   const sendJsonMessage = useCallback((jsonMsg: any) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(jsonMsg));
     } else {
-      messageQueueRef.current.push(jsonMsg);
+      messageQueue.push(jsonMsg);
     }
   }, []);
 
+  wsSend = sendJsonMessage;
+
   useEffect(() => {
-    const init = () => {
-      if (ws ?? false) {
-        wsRef.current = ws;
-      } else {
-        wsSend = sendJsonMessage;
-        ws = new WebSocket('http://localhost:5174');
-        wsRef.current = ws;
+    if (ws && !wsRef.current) {
+      wsRef.current = ws;
+    } else if (!ws) {
+      ws = new WebSocket('http://localhost:5174');
+      wsRef.current = ws;
 
-        ws.onopen = (_) => {
-          reconnectCountRef.current = 0;
-          getListeners().forEach((listener) => {
-            if (listener.messageQueue.current.length > 0) {
-              [...listener.messageQueue.current].forEach(sendJsonMessage);
-              listener.messageQueue.current = [];
-            }
-          });
-        };
+      ws.onopen = (_) => {
+        if (messageQueue.length > 0) {
+          messageQueue.forEach(sendJsonMessage);
+          messageQueue = [];
+        }
+      };
 
-        ws.onmessage = (e) => {
-          try {
-            const jsonMsg = JSON.parse(e.data);
-            listeners[jsonMsg.type].setJsonMessage(dataExtractor(jsonMsg));
-          } catch (err) {
-            console.error('Failed to parse ws message: ', err);
-          }
-        };
+      ws.onmessage = (e) => {
+        try {
+          const jsonMsg = JSON.parse(e.data) as MessageType<TState>;
+          listeners[jsonMsg.data[0].type].setJsonMessage(jsonMsg);
+        } catch (err) {
+          console.error('Failed to parse ws message: ', err);
+        }
+      };
 
-        ws.onclose = (e) => {
-          ws = null;
-          if (reconnectCountRef.current < 8) {
-            reconnectCountRef.current++;
-            window.setTimeout(init, 1000);
-          } else {
-            console.warn('Reach max attempts to reconnect');
-          }
-        };
-      }
-    };
+      ws.onclose = (e) => {
+        ws = null;
+        getListeners().forEach((listener) => {
+          listener.wsRef.current = null;
+        });
+      };
+    }
 
     const newListener: SocketListener = {
       key: typeKey,
       setJsonMessage: setLastJsonMessage,
-      messageQueue: messageQueueRef,
+      wsRef: wsRef,
     };
 
     listeners[typeKey] = newListener;
 
-    init();
-
     return () => {
       delete listeners[typeKey];
-      if (!hasListeners() && ws) {
-        ws.onclose = () => {};
-        ws.close();
-        ws = null;
-      }
-      setLastJsonMessage(null);
     };
   }, []);
 

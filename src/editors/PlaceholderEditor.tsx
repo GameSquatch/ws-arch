@@ -1,4 +1,7 @@
-const PlaceholderEditor = ({ objectId }: { objectId: string }) => {
+import { TabData } from './editorTabsState';
+
+const PlaceholderEditor = (props: Partial<TabData>) => {
+  const { objectId } = props;
   return <div>Placeholder: {objectId}</div>;
 };
 
